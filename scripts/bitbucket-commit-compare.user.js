@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bitbucket Commit Compare Buttons
-// @namespace    https://github.com/userscripts
+// @namespace    https://github.com/junglesub/chrome-userscripts
 // @version      0.1.0
 // @description  Add quick compare buttons next to Bitbucket Cloud commits.
 // @match        https://bitbucket.org/*/*/commits*
