@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bitbucket Commit Compare Buttons
 // @namespace    https://github.com/junglesub/chrome-userscripts
-// @version      0.1.0
+// @version      0.1.1
 // @description  Add quick compare buttons next to Bitbucket Cloud commits.
 // @match        https://bitbucket.org/*/*/commits*
 // @match        https://bitbucket.org/*/*/commits/*
@@ -25,6 +25,7 @@
   const EMPTY_COMPARE_MESSAGES = ['No commits to display.', 'There are no changes.'];
 
   let selectedCommit = null;
+  const commitOrder = new Map();
 
   const style = document.createElement('style');
   style.textContent = `
@@ -153,6 +154,18 @@
     return `${commit}^`;
   }
 
+  function buildInclusiveCommitCompareUrl(firstCommit, secondCommit) {
+    const firstOrder = commitOrder.get(firstCommit);
+    const secondOrder = commitOrder.get(secondCommit);
+    const firstIsNewer = Number.isFinite(firstOrder) && Number.isFinite(secondOrder)
+      ? firstOrder < secondOrder
+      : false;
+    const newerCommit = firstIsNewer ? firstCommit : secondCommit;
+    const olderCommit = firstIsNewer ? secondCommit : firstCommit;
+
+    return buildCompareUrl(newerCommit, getCommitParentRef(olderCommit));
+  }
+
   function getCompareRefsFromUrl() {
     const parts = location.pathname.split('/').filter(Boolean);
     const compareIndex = parts.indexOf('compare');
@@ -276,7 +289,7 @@
           return;
         }
 
-        openUrl(buildCompareUrl(commit, selectedCommit));
+        openUrl(buildInclusiveCommitCompareUrl(selectedCommit, commit));
         selectedCommit = null;
         resetSelectedButtons();
       }
@@ -352,6 +365,10 @@
     document.querySelectorAll('a[href*="/commits/"]').forEach((link) => {
       const commit = getCommitFromLink(link);
       if (commit) {
+        if (!commitOrder.has(commit)) {
+          commitOrder.set(commit, commitOrder.size);
+        }
+
         addButtons(link, commit);
       }
     });
